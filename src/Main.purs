@@ -92,7 +92,7 @@ router usersRef { method: HTTPure.Delete, path: ["users", id] } = do
   if deleted
     then HTTPure.noContent
     else HTTPure.notFound
-router _ _ = HTTPure.ok "Hello, world!"
+router _ _ = HTTPure.notFound
 
 main :: HTTPure.ServerM
 main = do
