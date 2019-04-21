@@ -5,7 +5,6 @@ module Main
 import Prelude
 
 import Effect (Effect)
-import Effect.Aff (Aff)
 import Effect.Console as Console
 import HTTPure as HTTPure
 
@@ -18,5 +17,5 @@ main = HTTPure.serve port router booted
     port :: Int
     port = 8080
 
-    router :: HTTPure.Request -> Aff HTTPure.Response
+    router :: HTTPure.Request -> HTTPure.ResponseM
     router _ = HTTPure.ok "Hello, world!"
