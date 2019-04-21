@@ -1,0 +1,25 @@
+{
+  "name": "purescript-httpure-users",
+  "description": "HTTPure example.",
+  "version": "0.0.0",
+  "author": "bouzuya <m@bouzuya.net> (https://bouzuya.net/)",
+  "bugs": {
+    "url": "https://github.com/bouzuya/purescript-httpure-users/issues"
+  },
+  "devDependencies": {
+    "purescript": "^0.12.5",
+    "spago": "^0.7.5"
+  },
+  "homepage": "https://github.com/bouzuya/purescript-httpure-users#readme",
+  "keywords": [],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bouzuya/purescript-httpure-users.git"
+  },
+  "scripts": {
+    "spago": "spago",
+    "test": "spago test"
+  }
+}
