@@ -58,6 +58,16 @@ router usersRef { method: HTTPure.Patch, path: ["users", id], body } = do
             Maybe.Just users' -> do
               _ <- liftEffect (Ref.write users' usersRef)
               HTTPure.ok (SimpleJSON.writeJSON user)
+router usersRef { method: HTTPure.Delete, path: ["users", id] } = do
+  users <- liftEffect (Ref.read usersRef)
+  case Array.findIndex ((eq id) <<< _.id) users of
+    Maybe.Nothing -> HTTPure.notFound
+    Maybe.Just index ->
+      case Array.deleteAt index users of
+        Maybe.Nothing -> HTTPure.internalServerError ""
+        Maybe.Just users' -> do
+          _ <- liftEffect (Ref.write users' usersRef)
+          HTTPure.noContent
 router _ _ = HTTPure.ok "Hello, world!"
 
 main :: HTTPure.ServerM
