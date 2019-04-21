@@ -33,5 +33,10 @@ main = HTTPure.serve port router booted
     port = 8080
 
     router :: HTTPure.Request -> HTTPure.ResponseM
-    router { path: ["users"] } = HTTPure.ok (SimpleJSON.writeJSON users)
+    router { method: HTTPure.Get, path: ["users"] } =
+      HTTPure.ok (SimpleJSON.writeJSON users)
+    router { method: HTTPure.Get, path: ["users", id] } = do
+      case Array.find ((eq id) <<< _.id) users of
+        Maybe.Nothing -> HTTPure.notFound
+        Maybe.Just user -> HTTPure.ok (SimpleJSON.writeJSON user)
     router _ = HTTPure.ok "Hello, world!"
