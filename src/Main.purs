@@ -8,6 +8,17 @@ import Effect (Effect)
 import Effect.Console as Console
 import HTTPure as HTTPure
 
+type User =
+  { name :: String
+  }
+
+users :: Array User
+users =
+  [ { name: "bouzuya" }
+  , { name: "user1" }
+  , { name: "user2" }
+  ]
+
 main :: HTTPure.ServerM
 main = HTTPure.serve port router booted
   where
