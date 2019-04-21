@@ -4,20 +4,23 @@ module Main
 
 import Prelude
 
+import Data.Foldable as Array
+import Data.Maybe as Maybe
 import Effect (Effect)
 import Effect.Console as Console
 import HTTPure as HTTPure
 import Simple.JSON as SimpleJSON
 
 type User =
-  { name :: String
+  { id :: String
+  , name :: String
   }
 
 users :: Array User
 users =
-  [ { name: "bouzuya" }
-  , { name: "user1" }
-  , { name: "user2" }
+  [ { id: "1", name: "bouzuya" }
+  , { id: "2", name: "user1" }
+  , { id: "3", name: "user2" }
   ]
 
 main :: HTTPure.ServerM
