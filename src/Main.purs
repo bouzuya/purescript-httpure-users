@@ -7,6 +7,7 @@ import Prelude
 import Effect (Effect)
 import Effect.Console as Console
 import HTTPure as HTTPure
+import Simple.JSON as SimpleJSON
 
 type User =
   { name :: String
@@ -29,4 +30,5 @@ main = HTTPure.serve port router booted
     port = 8080
 
     router :: HTTPure.Request -> HTTPure.ResponseM
+    router { path: ["users"] } = HTTPure.ok (SimpleJSON.writeJSON users)
     router _ = HTTPure.ok "Hello, world!"
