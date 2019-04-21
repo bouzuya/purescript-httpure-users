@@ -16,6 +16,8 @@ import Effect.Ref as Ref
 import HTTPure as HTTPure
 import Simple.JSON as SimpleJSON
 
+type DB = Ref (Array User)
+
 type User =
   { id :: String
   , name :: String
@@ -28,15 +30,24 @@ initialUsers =
   , { id: "3", name: "user2" }
   ]
 
-userIndex :: Ref (Array User) -> Aff (Array User)
+userIndex :: DB -> Aff (Array User)
 userIndex usersRef = liftEffect (Ref.read usersRef)
 
-userShow :: Ref (Array User) -> String -> Aff (Maybe User)
+userShow :: DB -> String -> Aff (Maybe User)
 userShow usersRef id = do
   users <- liftEffect (Ref.read usersRef)
   pure (Array.find ((eq id) <<< _.id) users)
 
-userUpdate :: Ref (Array User) -> String -> User -> Aff (Maybe User)
+userCreate :: DB -> User -> Aff (Maybe User)
+userCreate usersRef user = do
+  users <- liftEffect (Ref.read usersRef)
+  case Array.find ((eq user.id) <<< _.id) users of
+    Maybe.Just _ -> pure Maybe.Nothing
+    Maybe.Nothing -> do
+      _ <- liftEffect (Ref.write (Array.cons user users) usersRef)
+      pure (Maybe.Just user)
+
+userUpdate :: DB -> String -> User -> Aff (Maybe User)
 userUpdate usersRef id user = do
   users <- liftEffect (Ref.read usersRef)
   case Array.findIndex ((eq id) <<< _.id) users of
@@ -48,7 +59,7 @@ userUpdate usersRef id user = do
           _ <- liftEffect (Ref.write users' usersRef)
           pure (Maybe.Just user)
 
-userDestroy :: Ref (Array User) -> String -> Aff Boolean
+userDestroy :: DB -> String -> Aff Boolean
 userDestroy usersRef id = do
   users <- liftEffect (Ref.read usersRef)
   case Array.findIndex ((eq id) <<< _.id) users of
@@ -60,26 +71,30 @@ userDestroy usersRef id = do
           _ <- liftEffect (Ref.write users' usersRef)
           pure true
 
-router :: Ref (Array User) -> HTTPure.Request -> HTTPure.ResponseM
-router usersRef { method: HTTPure.Get, path: ["users"] } = do
+userIndexAction :: DB -> HTTPure.ResponseM
+userIndexAction usersRef = do
   users <- userIndex usersRef
   HTTPure.ok (SimpleJSON.writeJSON users)
-router usersRef { method: HTTPure.Post, path: ["users"], body } = do
-  users <- liftEffect (Ref.read usersRef)
+
+userCreateAction :: DB -> String -> HTTPure.ResponseM
+userCreateAction usersRef body = do
   case SimpleJSON.readJSON_ body :: _ User of
     Maybe.Nothing -> HTTPure.badRequest body
-    Maybe.Just user ->
-      case Array.find ((eq user.id) <<< _.id) users of
-        Maybe.Just _ -> HTTPure.badRequest body
-        Maybe.Nothing -> do
-          _ <- liftEffect (Ref.write (Array.cons user users) usersRef)
-          HTTPure.ok (SimpleJSON.writeJSON user)
-router usersRef { method: HTTPure.Get, path: ["users", id] } = do
+    Maybe.Just user -> do
+      created <- userCreate usersRef user
+      if Maybe.isJust created
+        then HTTPure.ok (SimpleJSON.writeJSON user)
+        else HTTPure.badRequest body
+
+userShowAction :: DB -> String -> HTTPure.ResponseM
+userShowAction usersRef id = do
   userMaybe <- userShow usersRef id
   case userMaybe of
     Maybe.Nothing -> HTTPure.notFound
     Maybe.Just user -> HTTPure.ok (SimpleJSON.writeJSON user)
-router usersRef { method: HTTPure.Patch, path: ["users", id], body } = do
+
+userUpdateAction :: DB -> String -> String -> HTTPure.ResponseM
+userUpdateAction usersRef id body = do
   case SimpleJSON.readJSON_ body :: _ User of
     Maybe.Nothing -> HTTPure.badRequest body
     Maybe.Just user -> do
@@ -87,17 +102,28 @@ router usersRef { method: HTTPure.Patch, path: ["users", id], body } = do
       if Maybe.isJust updated
         then HTTPure.ok (SimpleJSON.writeJSON user)
         else HTTPure.notFound
-router usersRef { method: HTTPure.Delete, path: ["users", id] } = do
+
+userDestroyAction :: DB -> String -> HTTPure.ResponseM
+userDestroyAction usersRef id = do
   deleted <- userDestroy usersRef id
   if deleted
     then HTTPure.noContent
     else HTTPure.notFound
-router _ _ = HTTPure.notFound
+
+router :: DB -> HTTPure.Request -> HTTPure.ResponseM
+router db = case _ of
+  { method: HTTPure.Get, path: ["users"] } -> userIndexAction db
+  { method: HTTPure.Post, path: ["users"], body } -> userCreateAction db body
+  { method: HTTPure.Get, path: ["users", id] } -> userShowAction db id
+  { method: HTTPure.Patch, path: ["users", id], body } ->
+    userUpdateAction db id body
+  { method: HTTPure.Delete, path: ["users", id] } -> userDestroyAction db id
+  _ -> HTTPure.notFound
 
 main :: HTTPure.ServerM
 main = do
-  usersRef <- Ref.new initialUsers
-  HTTPure.serve port (router usersRef) booted
+  db <- Ref.new initialUsers
+  HTTPure.serve port (router db) booted
   where
     booted :: Effect Unit
     booted = Console.log "Server now up on port 8080"
