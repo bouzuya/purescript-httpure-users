@@ -23,13 +23,6 @@ type User =
   , name :: String
   }
 
-initialUsers :: Array User
-initialUsers =
-  [ { id: "1", name: "bouzuya" }
-  , { id: "2", name: "user1" }
-  , { id: "3", name: "user2" }
-  ]
-
 index :: DB -> Aff (Array User)
 index usersRef = liftEffect (Ref.read usersRef)
 
