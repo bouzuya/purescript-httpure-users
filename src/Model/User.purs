@@ -45,8 +45,8 @@ update usersRef id user = do
   users <- liftEffect (Ref.read usersRef)
   case Array.findIndex ((eq id) <<< _.id) users of
     Maybe.Nothing -> pure Maybe.Nothing
-    Maybe.Just index ->
-      case Array.updateAt index user users of
+    Maybe.Just index' ->
+      case Array.updateAt index' user users of
         Maybe.Nothing -> pure Maybe.Nothing
         Maybe.Just users' -> do
           _ <- liftEffect (Ref.write users' usersRef)
@@ -57,8 +57,8 @@ destroy usersRef id = do
   users <- liftEffect (Ref.read usersRef)
   case Array.findIndex ((eq id) <<< _.id) users of
     Maybe.Nothing -> pure false
-    Maybe.Just index ->
-      case Array.deleteAt index users of
+    Maybe.Just index' ->
+      case Array.deleteAt index' users of
         Maybe.Nothing -> pure false
         Maybe.Just users' -> do
           _ <- liftEffect (Ref.write users' usersRef)
