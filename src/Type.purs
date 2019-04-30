@@ -3,9 +3,9 @@ module Type
   , User
   ) where
 
-import Effect.Ref (Ref)
+import Model.DB as Model
 
-type DB = Ref (Array User)
+type DB = Model.DB User
 
 type User =
   { id :: String
