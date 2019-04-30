@@ -1,9 +1,9 @@
-module Model
-  ( userIndex
-  , userCreate
-  , userShow
-  , userUpdate
-  , userDestroy
+module Model.User
+  ( index
+  , create
+  , show
+  , update
+  , destroy
   ) where
 
 import Prelude
@@ -30,16 +30,16 @@ initialUsers =
   , { id: "3", name: "user2" }
   ]
 
-userIndex :: DB -> Aff (Array User)
-userIndex usersRef = liftEffect (Ref.read usersRef)
+index :: DB -> Aff (Array User)
+index usersRef = liftEffect (Ref.read usersRef)
 
-userShow :: DB -> String -> Aff (Maybe User)
-userShow usersRef id = do
+show :: DB -> String -> Aff (Maybe User)
+show usersRef id = do
   users <- liftEffect (Ref.read usersRef)
   pure (Array.find ((eq id) <<< _.id) users)
 
-userCreate :: DB -> User -> Aff (Maybe User)
-userCreate usersRef user = do
+create :: DB -> User -> Aff (Maybe User)
+create usersRef user = do
   users <- liftEffect (Ref.read usersRef)
   case Array.find ((eq user.id) <<< _.id) users of
     Maybe.Just _ -> pure Maybe.Nothing
@@ -47,8 +47,8 @@ userCreate usersRef user = do
       _ <- liftEffect (Ref.write (Array.cons user users) usersRef)
       pure (Maybe.Just user)
 
-userUpdate :: DB -> String -> User -> Aff (Maybe User)
-userUpdate usersRef id user = do
+update :: DB -> String -> User -> Aff (Maybe User)
+update usersRef id user = do
   users <- liftEffect (Ref.read usersRef)
   case Array.findIndex ((eq id) <<< _.id) users of
     Maybe.Nothing -> pure Maybe.Nothing
@@ -59,8 +59,8 @@ userUpdate usersRef id user = do
           _ <- liftEffect (Ref.write users' usersRef)
           pure (Maybe.Just user)
 
-userDestroy :: DB -> String -> Aff Boolean
-userDestroy usersRef id = do
+destroy :: DB -> String -> Aff Boolean
+destroy usersRef id = do
   users <- liftEffect (Ref.read usersRef)
   case Array.findIndex ((eq id) <<< _.id) users of
     Maybe.Nothing -> pure false
