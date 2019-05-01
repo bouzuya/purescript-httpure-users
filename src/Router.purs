@@ -1,21 +1,37 @@
 module Router
-  ( router
+  ( RouteError(..)
+  , router
   ) where
 
-import Action.User as UserAction
-import HTTPure as HTTPure
-import Type (DB)
+import Prelude
 
-router :: DB -> HTTPure.Request -> HTTPure.ResponseM
-router db = case _ of
-  { method: HTTPure.Get, path: ["users"] } ->
-    UserAction.index db
-  { method: HTTPure.Post, path: ["users"], body } ->
-    UserAction.create db body
-  { method: HTTPure.Get, path: ["users", id] } ->
-    UserAction.show db id
-  { method: HTTPure.Patch, path: ["users", id], body } ->
-    UserAction.update db id body
-  { method: HTTPure.Delete, path: ["users", id] } ->
-    UserAction.destroy db id
-  _ -> HTTPure.notFound
+import Action (Action(..))
+import Data.Either (Either)
+import Data.Either as Either
+import HTTPure as HTTPure
+import Simple.JSON (class ReadForeign)
+import Simple.JSON as SimpleJSON
+
+data RouteError
+  = ClientError String
+  | NotFound
+
+fromJSON :: forall a. ReadForeign a => String -> Either RouteError a
+fromJSON s =
+  Either.either
+    (Either.Left <<< ClientError <<< show)
+    Either.Right
+    (SimpleJSON.readJSON s)
+
+router :: HTTPure.Request -> Either RouteError Action
+router = case _ of
+  { method: HTTPure.Get, path: ["users"] } -> pure UserIndex
+  { method: HTTPure.Post, path: ["users"], body } -> do
+    user <- fromJSON body
+    pure (UserCreate user)
+  { method: HTTPure.Get, path: ["users", id] } -> pure (UserShow id)
+  { method: HTTPure.Patch, path: ["users", id], body } -> do
+    user <- fromJSON body
+    pure (UserUpdate id user)
+  { method: HTTPure.Delete, path: ["users", id] } -> pure (UserDestroy id)
+  _ -> Either.Left NotFound
