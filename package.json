@@ -19,7 +19,9 @@
     "url": "git+https://github.com/bouzuya/purescript-httpure-users.git"
   },
   "scripts": {
+    "build": "spago build",
     "spago": "spago",
+    "start": "spago run",
     "test": "spago test"
   }
 }
